@@ -1,0 +1,25 @@
+image: ubuntu:xenial
+
+pipelines:
+  default:
+    - step:
+        script:
+          - apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y
+              build-essential lua5.1 luarocks mercurial
+          - luarocks install --local lpc
+          - luarocks install --local busted
+          - luarocks install --local luacov
+          - ~/.luarocks/bin/busted --verbose --coverage
+          - ~/.luarocks/bin/luacov hglib
+          - cat luacov.report.out
+
+          - luarocks install --local luarocks
+            # hg:// support was broken before 2.2.2
+            # (https://github.com/keplerproject/luarocks/commit/20eb947)
+          - ~/.luarocks/bin/luarocks install --local --verbose
+             --server=http://luarocks.org/dev hglib scm-0
+          - cd /tmp
+          - eval "$(~/.luarocks/bin/luarocks path)"
+          - lua5.1 "$OLDPWD/examples/version.lua"
+          - ~/.luarocks/bin/luarocks install --local lua-cjson
+          - lua5.1 "$OLDPWD/examples/log.lua"
